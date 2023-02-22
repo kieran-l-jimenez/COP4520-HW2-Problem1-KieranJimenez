@@ -31,8 +31,6 @@ public class ProblemOne {
         for (Thread thread : allGuests) {//start all threads
             thread.start();
         }
-        allGuests[0].notify();//tell leader to stop waiting and start tracking cake status
-        allGuests.notifyAll();//tell minotaur he can start inviting guests
         allGuests[0].join();//wait for the leader to say everyone has eaten
         System.out.println("Every guest has visited the labyrinth");
     }
@@ -40,8 +38,6 @@ public class ProblemOne {
     public static class guestThread extends Thread {
         static boolean hungry = true;
         public void run() {
-            try {
-                wait();
                 while (true) {
                     if (hungry && cakeFlag) {//if guest hungry and sees cake, will eat it
                         synchronized (this) {
@@ -51,29 +47,23 @@ public class ProblemOne {
                     }
                     //if the guest isn't hungry or doesn't see cake, it doesn't change the cakeFlag
                 }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
         }
     }
 
     public static class leaderThread extends Thread {
-        static int numCakesOrdered = 0;
+        static int numCakesOrdered = 1;
         public void run() {
-            try {
-                wait();
+
                 while (true) {
                     if (!cakeFlag) {
                         cakeFlag = true;
                         numCakesOrdered++;
                     }
-                    if (numCakesOrdered > numGuests) {
+                    if (numCakesOrdered >= numGuests) {
                         break;//ends and returns to main
                     }
                 }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+
         }
     }
 }

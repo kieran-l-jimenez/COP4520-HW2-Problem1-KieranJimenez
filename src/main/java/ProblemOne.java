@@ -81,14 +81,16 @@ public class ProblemOne {
     }
 
     public static class leaderThread extends guestThread {
-        static int numCakesOrdered = 1;
+        static int numCakesOrdered = 1;//we know that we start with one cupcake in the labyrinth
         @Override
         public void run() {
-            while (!exitFlag) {
-                if (cakeRoom.enterRoom(1)) {
-                    numCakesOrdered++;
+            while (!exitFlag) {//while minotaur accepts guests
+                if (cakeRoom.enterRoom(1)) {//enter room as leader and if we called for a new cupcake...
+                    numCakesOrdered++;//...note down we have seen more cupcakes
                 }
                 if (numCakesOrdered >= numGuests) {
+                    /*if there have been as many cupcakes as guests and everyone eats only one, by counting we know
+                    every guest has visited the labyrinth*/
                     this.closeDown();
                 }
             }

@@ -1,9 +1,9 @@
 /* Problem 1: Minotaur's Birthday Party
- * We have N guests (N threads, let N = 45)
+ * We have N guests (N threads, let N = 6)
  * We have one shared cupcake plate (Some shared structure like Counter that flips between present and not, 1/0)
  *  and infinite cupcakes (no limit to number of flips)
  *  one guest at a time (lock on counter)
- * Minotaur may pick same guest more than once (Minotaur = multithread policy)
+ * Minotaur may pick same guest more than once (Minotaur = multi-thread policy)
  * Guests can't communicate (no direct messages between threads or master thread they update)
  * Must show that everyone has had a cupcake at least once
  *
@@ -11,19 +11,18 @@
  * 1. Each thread tracks the number of times they enter the room
  *  Say finished when someone has visited the room N times
  *      ISSUE: Only works if minotaur is fair
- * 2. Each thread tracks whether they've visited. If they haven't, they flip the cakeflag, else they leave it
+ * 2. Each thread tracks whether they've visited. If they haven't, they flip the cake flag, else they leave it
  *  If they see the same state N times in a row they say everyone visited
  *      ISSUE: Same as above, minotaur can just call same guest N times in a row
  * 3. One thread in charge of calling for new cupcakes, counts number of cupcakes he has ordered
  *  Normie thread eats if they haven't, leaves it alone if they have eaten
- *  Once Leader thread has ordered N-2 cupcakes (sorry leader, no cupcake for you)
+ *  Once Leader thread has ordered N-2 cupcakes (sorry leader, no cupcake for you), tell minotaur everyone has entered
  */
 public class ProblemOne {
-    static boolean cakeFlag = true;
-    static int numGuests = 45;
+    static int numGuests = 5;
 
     public static void main(String[] args) throws InterruptedException {
-        Thread[] allGuests = new Thread[numGuests];//1 leader thread and 44 regular guest threads
+        guestThread[] allGuests = new guestThread[numGuests];//1 leader thread and 4 regular guest threads
         allGuests[0] = new leaderThread();
         for (int i = 1; i < allGuests.length; i++) {
             allGuests[i] = new guestThread();
@@ -32,38 +31,67 @@ public class ProblemOne {
             thread.start();
         }
         allGuests[0].join();//wait for the leader to say everyone has eaten
+        for (guestThread thread : allGuests) {//start all threads
+            thread.closeDown();
+        }
         System.out.println("Every guest has visited the labyrinth");
     }
 
-    public static class guestThread extends Thread {
-        static boolean hungry = true;
-        public void run() {
-                while (true) {
-                    if (hungry && cakeFlag) {//if guest hungry and sees cake, will eat it
-                        synchronized (this) {
-                            hungry = false;
-                            cakeFlag = false;
-                        }
+    public static class cakeRoom {
+        static boolean cakePresent = true;
+
+        synchronized public static boolean enterRoom(int behaviorType) {//1: leader, 2: hungry guest, 3: sated guest
+            switch (behaviorType) {
+                case 1:
+                    if (!cakePresent) {//no cake present
+                        cakePresent = true;//replace it
+                        return true;//remember that you replaced it
                     }
-                    //if the guest isn't hungry or doesn't see cake, it doesn't change the cakeFlag
-                }
+                    return false;//remember that you didn't replace it this time
+                case 2:
+                    if (cakePresent) {//cake is present
+                        cakePresent = false;//eat it
+                        return true;//remember eating it
+                    }
+                    return false;//remember that you're still hungry
+                case 3:
+                    return true;//don't eat it and remain content
+            }
+        return false;//WHO ARE YOU?
         }
     }
 
-    public static class leaderThread extends Thread {
-        static int numCakesOrdered = 1;
+    public static class guestThread extends Thread {
+        static boolean exitFlag = false;
+        static boolean hungry = true;
         public void run() {
-
-                while (true) {
-                    if (!cakeFlag) {
-                        cakeFlag = true;
-                        numCakesOrdered++;
+            while (!exitFlag) {
+                if (hungry) {//if hungry...
+                    if(cakeRoom.enterRoom(2)) {//...enter as a hungry guest...
+                        hungry = false;//...and if ate cupcake, no longer hungry
                     }
-                    if (numCakesOrdered >= numGuests) {
-                        break;//ends and returns to main
-                    }
+                } else {
+                    hungry = !cakeRoom.enterRoom(3);//keep visiting as minotaur wants, but don't do anything
                 }
+            }
+        }
+        public void closeDown() {
+            exitFlag = true;
+        }
+    }
 
+    public static class leaderThread extends guestThread {
+        static int numCakesOrdered = 1;
+        @Override
+        public void run() {
+            while (!exitFlag) {
+                if (cakeRoom.enterRoom(1)) {
+                    numCakesOrdered++;
+                }
+                if (numCakesOrdered >= numGuests) {
+                    this.closeDown();
+                }
+            }
         }
     }
 }

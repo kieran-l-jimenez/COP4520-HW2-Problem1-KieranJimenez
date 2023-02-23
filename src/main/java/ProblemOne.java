@@ -1,5 +1,5 @@
 /* Problem 1: Minotaur's Birthday Party
- * We have N guests (N threads, let N = 6)
+ * We have N guests (N threads, let N = 5)
  * We have one shared cupcake plate (Some shared structure like Counter that flips between present and not, 1/0)
  *  and infinite cupcakes (no limit to number of flips)
  *  one guest at a time (lock on counter)
@@ -14,7 +14,7 @@
  * 2. Each thread tracks whether they've visited. If they haven't, they flip the cake flag, else they leave it
  *  If they see the same state N times in a row they say everyone visited
  *      ISSUE: Same as above, minotaur can just call same guest N times in a row
- * 3. One thread in charge of calling for new cupcakes, counts number of cupcakes he has ordered
+ * THIS ONE 3. One thread in charge of calling for new cupcakes, counts number of cupcakes he has ordered
  *  Normie thread eats if they haven't, leaves it alone if they have eaten
  *  Once Leader thread has ordered N-2 cupcakes (sorry leader, no cupcake for you), tell minotaur everyone has entered
  */
